@@ -1,0 +1,146 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CleanCity Environmental Design System 
+All colors MUST be HSL for environmental sustainability theme.
+*/
+
+@layer base {
+  :root {
+    /* Base Environmental Colors */
+    --background: 120 20% 98%;
+    --foreground: 160 20% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 20% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 20% 15%;
+
+    /* Forest Green Primary Theme */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 142 76% 45%;
+
+    /* Natural Secondary Tones */
+    --secondary: 120 30% 94%;
+    --secondary-foreground: 160 20% 25%;
+
+    /* Muted Earth Tones */
+    --muted: 120 25% 92%;
+    --muted-foreground: 160 15% 50%;
+
+    /* Sky Blue Accent */
+    --accent: 200 85% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Eco Warning Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Clean Borders */
+    --border: 120 30% 88%;
+    --input: 120 30% 88%;
+    --ring: 142 76% 36%;
+
+    /* Environmental Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%), hsl(200 85% 60%));
+    --gradient-eco: linear-gradient(180deg, hsl(120 30% 94%), hsl(142 76% 95%));
+    --gradient-clean: linear-gradient(45deg, hsl(142 76% 36%), hsl(142 76% 45%));
+
+    /* Sustainability Shadows */
+    --shadow-eco: 0 10px 30px -10px hsl(142 76% 36% / 0.3);
+    --shadow-clean: 0 4px 20px -5px hsl(142 76% 36% / 0.2);
+    --shadow-glow: 0 0 40px hsl(142 76% 45% / 0.4);
+
+    /* Smooth Animations */
+    --transition-eco: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.2s ease-in-out;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Environmental Theme */
+    --background: 160 25% 8%;
+    --foreground: 120 20% 95%;
+
+    --card: 160 20% 12%;
+    --card-foreground: 120 20% 95%;
+
+    --popover: 160 20% 12%;
+    --popover-foreground: 120 20% 95%;
+
+    /* Dark Forest Primary */
+    --primary: 142 70% 50%;
+    --primary-foreground: 160 25% 8%;
+    --primary-glow: 142 70% 60%;
+
+    /* Dark Secondary */
+    --secondary: 160 15% 20%;
+    --secondary-foreground: 120 20% 90%;
+
+    /* Dark Muted */
+    --muted: 160 15% 18%;
+    --muted-foreground: 120 10% 70%;
+
+    /* Dark Accent */
+    --accent: 200 80% 55%;
+    --accent-foreground: 160 25% 8%;
+
+    /* Dark Destructive */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Dark Borders */
+    --border: 160 15% 22%;
+    --input: 160 15% 22%;
+    --ring: 142 70% 50%;
+
+    /* Dark Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(142 70% 30%), hsl(200 80% 40%));
+    --gradient-eco: linear-gradient(180deg, hsl(160 15% 18%), hsl(142 70% 12%));
+    --gradient-clean: linear-gradient(45deg, hsl(142 70% 35%), hsl(142 70% 45%));
+
+    /* Dark Shadows */
+    --shadow-eco: 0 10px 30px -10px hsl(142 70% 20% / 0.5);
+    --shadow-clean: 0 4px 20px -5px hsl(142 70% 20% / 0.4);
+    --shadow-glow: 0 0 40px hsl(142 70% 40% / 0.3);
+
+    --sidebar-background: 160 20% 10%;
+    --sidebar-foreground: 120 20% 90%;
+    --sidebar-primary: 142 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 160 15% 18%;
+    --sidebar-accent-foreground: 120 20% 90%;
+    --sidebar-border: 160 15% 22%;
+    --sidebar-ring: 142 70% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
