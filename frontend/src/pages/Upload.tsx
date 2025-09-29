@@ -119,43 +119,58 @@ const Upload = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !classification) {
-      toast({
-        title: "Missing information",
-        description: "Please select a file and classify it first.",
-        variant: "destructive",
-      });
-      return;
+  if (!selectedFile || !classification || !location) {
+    toast({
+      title: "Missing information",
+      description: "Please select a file, classify it, and capture location first.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsUploading(true);
+  try {
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+    formData.append("lat", location.lat.toString());
+    formData.append("lng", location.lng.toString());
+    formData.append("userId", "guest-user");
+
+const response = await fetch("http://localhost:3000/api/upload", {
+  method: "POST",
+  body: formData,
+});
+
+    if (!response.ok) {
+      throw new Error("Upload failed");
     }
 
-    setIsUploading(true);
-    try {
-      // Simulate upload to API - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Upload successful!",
-        description: "Your contribution has been recorded. Thank you for helping clean our city!",
-      });
+    const savedRecord = await response.json();
 
-      // Reset form
-      setSelectedFile(null);
-      setPreview(null);
-      setClassification(null);
-      setLocation(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload the image. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
+    toast({
+      title: "Upload successful!",
+      description: `Record stored: ${savedRecord.label} (${(savedRecord.confidence * 100).toFixed(1)}%)`,
+    });
+
+    // Reset form
+    setSelectedFile(null);
+    setPreview(null);
+    setClassification(null);
+    setLocation(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-  };
+  } catch (error) {
+    console.error("Upload error:", error);
+    toast({
+      title: "Upload failed",
+      description: "Failed to upload the image. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
