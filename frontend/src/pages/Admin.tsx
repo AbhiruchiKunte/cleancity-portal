@@ -24,7 +24,8 @@ import {
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminToken, setAdminToken] = useState('');
+  // NOTE: adminToken is not used in the final version, keeping it for initial code consistency
+  const [adminToken, setAdminToken] = useState(''); 
   const [filterDate, setFilterDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const { toast } = useToast();
@@ -82,37 +83,38 @@ const Admin = () => {
   ];
 
   const handleLogin = async () => {
-  try {
-    const response = await fetch('http://localhost:3000/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: adminPassword }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok && data.success) {
-      setIsAuthenticated(true);
-      setAdminPassword(""); // clear password field
-      toast({
-        title: "Authentication successful",
-        description: "Welcome to the admin dashboard!",
+    try {
+      const response = await fetch('http://localhost:3000/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: adminPassword }),
       });
-    } else {
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIsAuthenticated(true);
+        toast({
+          title: "Authentication successful",
+          description: "Welcome to the admin dashboard!",
+        });
+      } else {
+        toast({
+          title: "Authentication failed",
+          description: data.message || "Incorrect admin details. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Authentication failed",
-        description: data.message || "Incorrect admin details. Please try again.",
+        title: "Error",
+        description: "Unable to connect to server. Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setAdminPassword(""); 
     }
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "Unable to connect to server. Please try again later.",
-      variant: "destructive",
-    });
-  }
-};
+  };
 
   const handleValidateRecord = (recordId: number, isValid: boolean) => {
     toast({
@@ -140,42 +142,43 @@ const Admin = () => {
             </div>
             <CardTitle>Admin Authentication</CardTitle>
             <CardDescription>
-              Enter your admin token to access the dashboard
+              Enter your admin password to access the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
- <div className="space-y-2 relative">
-  <Label htmlFor="admin-password">Admin Password</Label>
-  <div className="relative">
-    <Input
-      id="admin-password"
-      type={showPassword ? "text" : "password"}
-      placeholder="Enter admin password"
-      value={adminPassword}
-      onChange={(e) => setAdminPassword(e.target.value)}
-      onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-      className="pr-10"
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
-    >
-      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-    </button>
-  </div>
-</div>
+            <div className="space-y-2 relative">
+              <Label htmlFor="admin-password">Admin Password</Label>
+              <div className="relative">
+                <Input
+                  id="admin-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter admin password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  className="pr-10"
+                />
+                { }
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
 
-  <Button 
-    onClick={handleLogin} 
-    className="w-full" 
-    variant="admin"
-    disabled={!adminPassword.trim()}
-  >
-    <Key className="mr-2 h-4 w-4" />
-    Authenticate
-  </Button>
-</CardContent>
+            <Button 
+              onClick={handleLogin} 
+              className="w-full" 
+              variant="admin"
+              disabled={!adminPassword.trim()}
+            >
+              <Key className="mr-2 h-4 w-4" />
+              Authenticate
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
