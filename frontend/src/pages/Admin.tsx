@@ -17,7 +17,9 @@ import {
   TrendingUp,
   MapPin,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Eye, 
+  EyeOff
 } from 'lucide-react';
 
 const Admin = () => {
@@ -26,6 +28,10 @@ const Admin = () => {
   const [filterDate, setFilterDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const { toast } = useToast();
+
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // Simulated admin data
   const pendingRecords = [
@@ -75,10 +81,19 @@ const Admin = () => {
     { label: 'Active Users', value: '342', icon: Users }
   ];
 
-  const handleLogin = () => {
-    // Simple admin authentication - replace with proper auth
-    if (adminToken === 'ADMIN_TOKEN' || adminToken === 'admin123') {
+  const handleLogin = async () => {
+  try {
+    const response = await fetch('http://localhost:3000/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
       setIsAuthenticated(true);
+      setAdminPassword(""); // clear password field
       toast({
         title: "Authentication successful",
         description: "Welcome to the admin dashboard!",
@@ -86,11 +101,18 @@ const Admin = () => {
     } else {
       toast({
         title: "Authentication failed",
-        description: "Invalid admin token. Please try again.",
+        description: data.message || "Incorrect admin details. Please try again.",
         variant: "destructive",
       });
     }
-  };
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "Unable to connect to server. Please try again later.",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleValidateRecord = (recordId: number, isValid: boolean) => {
     toast({
@@ -122,30 +144,38 @@ const Admin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="admin-token">Admin Token</Label>
-              <Input
-                id="admin-token"
-                type="password"
-                placeholder="Enter admin token"
-                value={adminToken}
-                onChange={(e) => setAdminToken(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-            <Button 
-              onClick={handleLogin} 
-              className="w-full" 
-              variant="admin"
-              disabled={!adminToken.trim()}
-            >
-              <Key className="mr-2 h-4 w-4" />
-              Authenticate
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              Demo: Use "admin123" as the token
-            </p>
-          </CardContent>
+ <div className="space-y-2 relative">
+  <Label htmlFor="admin-password">Admin Password</Label>
+  <div className="relative">
+    <Input
+      id="admin-password"
+      type={showPassword ? "text" : "password"}
+      placeholder="Enter admin password"
+      value={adminPassword}
+      onChange={(e) => setAdminPassword(e.target.value)}
+      onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+      className="pr-10"
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+    >
+      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+    </button>
+  </div>
+</div>
+
+  <Button 
+    onClick={handleLogin} 
+    className="w-full" 
+    variant="admin"
+    disabled={!adminPassword.trim()}
+  >
+    <Key className="mr-2 h-4 w-4" />
+    Authenticate
+  </Button>
+</CardContent>
         </Card>
       </div>
     );

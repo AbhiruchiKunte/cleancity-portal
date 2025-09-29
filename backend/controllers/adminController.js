@@ -1,4 +1,22 @@
 import Record from '../models/Record.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+/**
+ * POST /api/admin/login - Authenticate admin with password only
+ */
+const loginAdmin = (req, res) => {
+  const { password } = req.body;
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    return res.json({ success: true, message: 'Login successful' });
+  }
+
+  return res.status(401).json({
+    success: false,
+    message: 'Incorrect admin details. Please try again.',
+  });
+};
 
 /**
  * POST /api/validate/:id: Validates a record. (Module B6)
@@ -67,4 +85,4 @@ const exportRecords = async (req, res) => {
   }
 };
 
-export { validateRecord, exportRecords };
+export { validateRecord, exportRecords, loginAdmin };
