@@ -8,6 +8,8 @@ import connectDB from './config/db.js';
 import uploadRoutes from './routes/upload.js';
 import dataRoutes from './routes/data.js';
 import adminRoutes from './routes/admin.js';
+import userRoutes from './routes/user.js';
+import authenticate from './middleware/authMiddleware.js';
 
 // Load environment variables (Module B1)
 dotenv.config();
@@ -23,8 +25,6 @@ app.use(cors()); // Enable CORS for client requests
 app.use(express.json()); // Body parser for JSON
 app.use(express.urlencoded({ extended: true })); // Body parser for form data
 
-// Serve static uploaded files (important for the client to view the images)
-// Assuming the client knows the image_url path (e.g., /uploads/image-123.jpg)
 // The __dirname part is a Node.js standard way to resolve the current directory
 app.use('/uploads', express.static(path.resolve('uploads')));
 
@@ -32,6 +32,7 @@ app.use('/uploads', express.static(path.resolve('uploads')));
 app.use('/api', uploadRoutes); // Module B4: Upload and Classification
 app.use('/api', dataRoutes);   // Module B5: Fetch Records, Leaderboard, Hotspots
 app.use('/api/admin', adminRoutes); // Module B6: Admin APIs
+app.use('/api/users', userRoutes); // Module B7: User Registration & Login
 
 // Test Route (Module B1)
 app.get('/', (req, res) => {
@@ -41,5 +42,4 @@ app.get('/', (req, res) => {
 // Start the server (Module B1)
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log(`Test Route: http://localhost:${PORT}/`);
 });
