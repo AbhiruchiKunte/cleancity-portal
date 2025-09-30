@@ -2,16 +2,14 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-// Mock user type
 interface User {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  username: string; // for leaderboard
+  username: string;
 }
 
-// Mock auth context type
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
@@ -21,63 +19,79 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database
-const mockUsers: User[] = [
-  { id: '1', firstName: 'John', lastName: 'Doe', email: 'user@example.com', username: 'EcoWarrior' },
-];
-
-// Mock password hashing (for demonstration only)
-const hashPassword = (password: string) => `hashed_${password}_secret`;
+// 👇 Define BASE_URL here
+const BASE_URL = "http://localhost:3000/api/users"; 
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Check localStorage for a persistent mock login state
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('mockUser');
+    const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  // --- LOGIN ---
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock login logic
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call delay
+    try {
+      const res = await fetch(`${BASE_URL}/login`, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const foundUser = mockUsers.find(u => u.email === email);
-    // In a real app, you would check the hashed password here.
-    const isPasswordValid = hashPassword(password) === 'hashed_password123_secret' || foundUser; 
-    
-    if (foundUser && isPasswordValid) {
-      setUser(foundUser);
-      localStorage.setItem('mockUser', JSON.stringify(foundUser));
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      const loggedInUser: User = {
+        id: data.user.userId,
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        email: data.user.email,
+        username: data.user.username,
+      };
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      setUser(loggedInUser);
       return true;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-    return false;
   };
 
+  // --- REGISTER ---
   const register = async (userData: Omit<User, 'id'> & { password: string }): Promise<boolean> => {
-    // Mock register logic
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call delay
-    
-    // Check if username or email already exists
-    if (mockUsers.some(u => u.email === userData.email || u.username === userData.username)) {
-      return false; 
+    try {
+      const res = await fetch(`${BASE_URL}/register`, {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      const newUser: User = {
+        id: data.userId,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: data.email,
+        username: data.username,
+      };
+
+      localStorage.setItem('user', JSON.stringify(newUser));
+      setUser(newUser);
+      return true;
+    } catch (error) {
+      console.error("Register error:", error);
+      return false;
     }
-
-    const newUser: User = { 
-      ...userData, 
-      id: Date.now().toString() 
-    };
-
-    // Store hash (mock)
-    console.log(`Saving user: ${newUser.email} with hashed password: ${hashPassword(userData.password)}`);
-    
-    mockUsers.push(newUser); // Add to mock DB
-    setUser(newUser);
-    localStorage.setItem('mockUser', JSON.stringify(newUser));
-    return true;
   };
 
+  // --- LOGOUT ---
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('mockUser');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const value = useMemo(() => ({ user, login, register, logout }), [user]);
@@ -87,8 +101,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

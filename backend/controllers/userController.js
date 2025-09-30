@@ -6,42 +6,37 @@ import jwt from "jsonwebtoken";
  * Registers a new user (from Register.tsx form)
  */
 const registerUser = async (req, res) => {
-  const { firstName, lastName, username, email, password } = req.body;
-
-  if (!firstName || !lastName || !username || !email || !password) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
-
   try {
-    // Check if email or username already exists
+    const { fullName, email, username, password } = req.body;
+
+    // check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+
     if (existingUser) {
-      return res.status(400).json({ message: "User with this email or username already exists." });
+      return res.status(400).json({
+        message: existingUser.email === email
+          ? "Email already exists"
+          : "Username already exists",
+      });
     }
 
-    // Hash password
+    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // create new user
     const newUser = new User({
-      firstName,
-      lastName,
-      username,
+      fullName,
       email,
+      username,
       password: hashedPassword,
     });
 
-    const savedUser = await newUser.save();
+    await newUser.save();
 
-    res.status(201).json({
-      message: "User registered successfully",
-      userId: savedUser._id,
-      username: savedUser.username,
-      email: savedUser.email,
-    });
+    res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    console.error("Error during user registration:", error);
-    res.status(500).json({ message: "Failed to register user", error: error.message });
+    console.error("Register error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
