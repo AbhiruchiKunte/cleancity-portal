@@ -21,18 +21,18 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 // Middleware Setup (Module B1)
-app.use(cors()); // Enable CORS for client requests
-app.use(express.json()); // Body parser for JSON
-app.use(express.urlencoded({ extended: true })); // Body parser for form data
+app.use(cors());
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true })); 
 
 // The __dirname part is a Node.js standard way to resolve the current directory
 app.use('/uploads', express.static(path.resolve('uploads')));
 
 // --- Routes Setup ---
-app.use('/api', uploadRoutes); // Module B4: Upload and Classification
+app.use('/api', uploadRoutes);
 app.use('/api', dataRoutes);   // Module B5: Fetch Records, Leaderboard, Hotspots
-app.use('/api/admin', adminRoutes); // Module B6: Admin APIs
-app.use('/api/users', userRoutes); // Module B7: User Registration & Login
+app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes); 
 
 // Test Route (Module B1)
 app.get('/', (req, res) => {

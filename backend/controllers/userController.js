@@ -1,80 +1,86 @@
-import User from "../models/User.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+// controllers/userController.js
 
-/**
- * Registers a new user (from Register.tsx form)
- */
-const registerUser = async (req, res) => {
+import User from '../models/User.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+// ----------------- REGISTER -----------------
+const register = async (req, res) => {
   try {
-    const { fullName, email, username, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
 
-    // check if user already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+    });
     if (existingUser) {
-      return res.status(400).json({
-        message: existingUser.email === email
-          ? "Email already exists"
-          : "Username already exists",
-      });
+      return res.status(400).json({ message: 'Email or username already exists' });
     }
 
-    // hash password
+    // 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create new user
+    // 3️⃣ Create new user
     const newUser = new User({
-      fullName,
-      email,
+      firstName,
+      lastName,
       username,
+      email,
       password: hashedPassword,
     });
 
-    await newUser.save();
+    const savedUser = await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    // 4️⃣ Generate JWT token
+    const token = jwt.sign({ userId: savedUser._id.toString() }, process.env.JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    // 5️⃣ Send response to frontend
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        userId: savedUser._id.toString(),
+        firstName: savedUser.firstName,
+        lastName: savedUser.lastName,
+        username: savedUser.username,
+        email: savedUser.email,
+      },
+    });
   } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
 
-/**
- * Logs in a user and returns a JWT
- */
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required." });
-  }
-
+// ----------------- LOGIN -----------------
+const login = async (req, res) => {
   try {
-    // Check user existence
+    const { email, password } = req.body;
+
+    // 1️⃣ Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Compare password
+    // 2️⃣ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password." });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET, 
-      { expiresIn: "7d" }
-    );
+    // 3️⃣ Generate JWT token
+    const token = jwt.sign({ userId: user._id.toString() }, process.env.JWT_SECRET, {
+      expiresIn: '7d',
+    });
 
+    // 4️⃣ Send response
     res.status(200).json({
-      message: "Login successful",
+      message: 'Login successful',
       token,
       user: {
-        userId: user._id,
+  userId: user._id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         username: user.username,
@@ -82,9 +88,9 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error during user login:", error);
-    res.status(500).json({ message: "Login failed", error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 
-export { registerUser, loginUser };
+export { register, login };

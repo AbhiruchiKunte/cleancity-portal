@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import { 
   Upload as UploadIcon, 
   Camera, 
@@ -28,6 +29,7 @@ const Upload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const wasteCategories = {
     plastic: { icon: "🥤", color: "text-blue-600", name: "Plastic Waste" },
@@ -134,11 +136,13 @@ const Upload = () => {
     formData.append("image", selectedFile);
     formData.append("lat", location.lat.toString());
     formData.append("lng", location.lng.toString());
-    formData.append("userId", "guest-user");
 
 const response = await fetch("http://localhost:3000/api/upload", {
   method: "POST",
   body: formData,
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`, // 👈 send JWT
+  },
 });
 
     if (!response.ok) {

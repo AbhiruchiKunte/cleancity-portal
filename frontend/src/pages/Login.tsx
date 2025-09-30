@@ -16,7 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { toast } = useToast();
 
   const handleClearForm = () => {
@@ -24,37 +24,38 @@ const Login = () => {
     setPassword('');
   };
 
+  // --- HANDLE SUBMIT ---
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const success = await login(email, password);
+  try {
+    const loggedInUser = await login(email, password); 
 
-      if (success) {
-        toast({
-          title: "Login Successful! 🌱",
-          description: "Welcome back, eco-warrior!",
-        });
-        navigate('/');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-        });
-      }
-    } catch (error) {
+    if (loggedInUser) {
+      toast({
+        title: "Login Successful! 🌱",
+        description: `Welcome back, ${loggedInUser.username}!`,
+      });
+      navigate('/');
+    } else {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred during login.",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
       });
-    } finally {
-      setIsLoading(false);
-      handleClearForm(); // Clear form regardless of outcome
     }
-  };
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "An unexpected error occurred during login.",
+    });
+  } finally {
+    setIsLoading(false);
+    handleClearForm();
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-64px)] py-12 bg-secondary/30">
@@ -106,7 +107,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                 />
-                {/* Updated Password Toggle for better visibility and consistent style */}
+                { }
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}

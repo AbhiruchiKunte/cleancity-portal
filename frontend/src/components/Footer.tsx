@@ -18,11 +18,7 @@ const Footer = () => {
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Empowering communities to create cleaner, greener cities through AI-powered waste classification and collaborative environmental action.
-            </p>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <Heart className="h-4 w-4 text-destructive" />
-              <span>Made with love for our planet</span>
-            </div>
+            </p>    
           </div>
 
           {/* Quick Links */}
@@ -70,11 +66,11 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span className="text-sm text-muted-foreground">contact@cleancity.app</span>
+                <span className="text-sm text-muted-foreground">admin@cleancity.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="text-sm text-muted-foreground">+1 (555) 123-4567</span>
+                <span className="text-sm text-muted-foreground">+91 88444 45546</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-primary" />
@@ -92,7 +88,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-muted-foreground">
-              © 2024 CleanCity. All rights reserved. Building a sustainable future together.
+              © 2025 CleanCity. All rights reserved. Building a sustainable future together.
             </p>
             <div className="flex items-center space-x-4">
               <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">

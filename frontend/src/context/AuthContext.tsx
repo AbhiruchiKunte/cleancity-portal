@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 interface User {
-  id: string;
+  _id: string;       // <-- fix: remove dot
   firstName: string;
   lastName: string;
   email: string;
@@ -12,15 +12,14 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<User | null>;
+  register: (userData: Omit<User, '_id'> & { password: string }) => Promise<boolean>; // <-- omit _id
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 👇 Define BASE_URL here
-const BASE_URL = "http://localhost:3000/api/users"; 
+const BASE_URL = "http://localhost:3000/api/users";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -29,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   // --- LOGIN ---
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       const res = await fetch(`${BASE_URL}/login`, {
         method: 'POST',
@@ -37,11 +36,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) return false;
+      if (!res.ok) return null;
 
       const data = await res.json();
+
       const loggedInUser: User = {
-        id: data.user.userId,
+        _id: data.user.userId,       // <-- use _id
         firstName: data.user.firstName,
         lastName: data.user.lastName,
         email: data.user.email,
@@ -51,15 +51,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
       setUser(loggedInUser);
-      return true;
+      return loggedInUser;
     } catch (error) {
       console.error("Login error:", error);
-      return false;
+      return null;
     }
   };
 
   // --- REGISTER ---
-  const register = async (userData: Omit<User, 'id'> & { password: string }): Promise<boolean> => {
+  const register = async (userData: Omit<User, '_id'> & { password: string }): Promise<boolean> => {
     try {
       const res = await fetch(`${BASE_URL}/register`, {
         method: 'POST',
@@ -70,12 +70,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!res.ok) return false;
 
       const data = await res.json();
+
       const newUser: User = {
-        id: data.userId,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: data.email,
-        username: data.username,
+        _id: data.user.userId,      
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        email: data.user.email,
+        username: data.user.username,
       };
 
       localStorage.setItem('user', JSON.stringify(newUser));
