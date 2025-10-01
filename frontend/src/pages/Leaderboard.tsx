@@ -115,7 +115,7 @@ const Leaderboard = () => {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Leaderboard */}
         <div className="lg:col-span-2 space-y-6">
           {/* Top 3 Podium */}
@@ -130,7 +130,7 @@ const Leaderboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {topContributors.slice(0, 3).map((contributor, index) => (
                   <div key={contributor.rank} className="text-center">
                     <div className={`relative mx-auto w-20 h-20 rounded-full ${getRankBadgeColor(contributor.rank)} flex items-center justify-center mb-4 shadow-eco`}>
@@ -175,7 +175,7 @@ const Leaderboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {topContributors.map((contributor, index) => (
-                  <div key={contributor.rank} className="flex items-center space-x-4 p-4 bg-gradient-eco rounded-lg hover:shadow-clean transition-all duration-300">
+                  <div key={contributor.rank} className="flex flex-col sm:flex-row items-center sm:space-x-4 p-4 bg-gradient-eco rounded-lg hover:shadow-clean transition-all duration-300">
                     <div className="flex items-center justify-center w-12 h-12 bg-gradient-clean rounded-full shadow-sm">
                       {contributor.rank <= 3 ? (
                         getRankIcon(contributor.rank)
@@ -190,28 +190,28 @@ const Leaderboard = () => {
                       </AvatarFallback>
                     </Avatar>
                     
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
-                        {contributor.name}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>{contributor.contributions} uploads</span>
-                        <span>🔥 {contributor.streak} day streak</span>
-                      </div>
-                    </div>
+<div className="flex-1 min-w-0 text-center sm:text-left mt-3 sm:mt-0">
+  <h3 className="font-semibold text-foreground">
+    {contributor.name}
+  </h3>
+  <div className="flex flex-col sm:flex-row justify-center sm:justify-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-sm text-muted-foreground">
+    <span>{contributor.contributions} uploads</span>
+    <span>🔥 {contributor.streak} day streak</span>
+  </div>
+</div>
                     
-                    <div className="text-right">
-                      <div className="font-bold text-lg text-primary">
-                        {contributor.points}
-                      </div>
-                      <div className="text-sm text-muted-foreground">points</div>
-                    </div>
-                    
-                    <div className="flex space-x-1">
-                      {contributor.badges.map((badge, badgeIndex) => (
-                        <span key={badgeIndex} className="text-lg">{badge}</span>
-                      ))}
-                    </div>
+<div className="text-center sm:text-right">
+    <div className="font-bold text-lg text-primary">
+      {contributor.points}
+    </div>
+    <div className="text-sm text-muted-foreground">points</div>
+  </div>
+  
+  <div className="flex space-x-1 mt-1">
+    {contributor.badges.map((badge, badgeIndex) => (
+      <span key={badgeIndex} className="text-lg">{badge}</span>
+    ))}
+  </div>                    
                   </div>
                 ))}
               </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,12 +24,18 @@ import {
 } from 'lucide-react';
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // NOTE: adminToken is not used in the final version, keeping it for initial code consistency
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('adminAuthenticated') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [adminToken, setAdminToken] = useState(''); 
   const [filterDate, setFilterDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -94,6 +101,7 @@ const Admin = () => {
 
       if (response.ok && data.success) {
         setIsAuthenticated(true);
+        try { sessionStorage.setItem('adminAuthenticated', 'true'); } catch (e) {}
         toast({
           title: "Authentication successful",
           description: "Welcome to the admin dashboard!",
@@ -216,7 +224,7 @@ const Admin = () => {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Records Management */}
         <div className="lg:col-span-2 space-y-6">
           {/* Filters */}
@@ -279,7 +287,7 @@ const Admin = () => {
             <CardContent>
               <div className="space-y-4">
                 {pendingRecords.map((record) => (
-                  <div key={record.id} className="flex items-center space-x-4 p-4 bg-gradient-eco rounded-lg">
+                  <div key={record.id} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
                     <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
                       <img
                         src={`https://via.placeholder.com/80/22C55E/FFFFFF?text=${record.category[0]}`}
@@ -342,14 +350,18 @@ const Admin = () => {
                 <Calendar className="mr-2 h-4 w-4" />
                 Generate Report
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => navigate('analytics')}>
                 <TrendingUp className="mr-2 h-4 w-4" />
                 View Analytics
               </Button>
               <Button 
                 variant="destructive" 
                 className="w-full" 
-                onClick={() => setIsAuthenticated(false)}
+                onClick={() => {
+                  setIsAuthenticated(false);
+                  try { sessionStorage.removeItem('adminAuthenticated'); } catch (e) {}
+                  navigate('/admin');
+                }}
               >
                 <Key className="mr-2 h-4 w-4" />
                 Logout

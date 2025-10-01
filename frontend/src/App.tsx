@@ -14,8 +14,9 @@ import Upload from "./pages/Upload";
 import MapView from "./pages/MapView";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
-import { AuthProvider, useAuth } from './context/AuthContext'; // Import AuthContext
+import { AuthProvider, useAuth } from './context/AuthContext'; 
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,8 @@ const AppContent = () => {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="admin" element={<Admin />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="admin/analytics" element={<Analytics />} />
 
             {/* Private Routes - User must be logged in */}
             <Route path="upload" element={<PrivateRoute element={<Upload />} />} />

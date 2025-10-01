@@ -193,7 +193,7 @@ const response = await fetch("http://localhost:3000/api/upload", {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Upload Section */}
         <Card className="animate-slide-up">
           <CardHeader>
@@ -219,7 +219,7 @@ const response = await fetch("http://localhost:3000/api/upload", {
                 className="hidden"
               />
               
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   variant="eco"
                   onClick={handleCameraCapture}

@@ -62,7 +62,7 @@ const exportRecords = async (req, res) => {
     records.forEach(record => {
       const row = [
         record._id.toString(),
-        `"${record.userId}"`, // Wrap complex/string fields in quotes
+        `"${record.userId}"`,
         `"${record.label}"`,
         record.confidence,
         record.lat,
