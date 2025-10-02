@@ -11,6 +11,8 @@ const authenticateAdmin = (req, res, next) => {
   if (!token || token !== `Bearer ${adminToken}`) {
     return res.status(401).json({ message: 'Access Denied: Invalid or missing admin token.' });
   }
+  // Attach a simple admin identifier for audit purposes
+  req.admin = 'admin';
   next(); // Token is valid, proceed to the next handler
 };
 

@@ -1,21 +1,27 @@
 import express from 'express';
-import { getRecentRecords, getLeaderboard, getHotspots } from '../controllers/dataController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import {
+	getRecentRecords,
+	getLeaderboard,
+	getHotspots,
+	getTopContributors,
+	getFullLeaderboard,
+	getMyLeaderboard,
+	getMyAchievements,
+	getMyMonthlyProgress
+} from '../controllers/dataController.js';
 
 const router = express.Router();
 
-/**
- * GET /api/records - Recent validated records. (Module B5)
- */
+// Public endpoints
 router.get('/records', getRecentRecords);
-
-/**
- * GET /api/leaderboard - Aggregate points by user. (Module B5)
- */
-router.get('/leaderboard', getLeaderboard);
-
-/**
- * GET /api/hotspots - Aggregate frequent location clusters. (Module B5)
- */
 router.get('/hotspots', getHotspots);
+router.get('/leaderboard/top', getTopContributors);
+router.get('/leaderboard', getFullLeaderboard);
+
+// Authenticated user endpoints
+router.get('/leaderboard/me', authMiddleware, getMyLeaderboard);
+router.get('/achievements/me', authMiddleware, getMyAchievements);
+router.get('/progress/monthly/me', authMiddleware, getMyMonthlyProgress);
 
 export default router;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,11 @@ const Admin = () => {
       return false;
     }
   });
-  const [adminToken, setAdminToken] = useState(''); 
+  const [adminToken, setAdminToken] = useState<string>(() => {
+    try { return sessionStorage.getItem('adminToken') || ''; } catch (e) { return ''; }
+  });
+  const [useLiveData, setUseLiveData] = useState(false);
+  const [pendingList, setPendingList] = useState<any[]>([]);
   const [filterDate, setFilterDate] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const { toast } = useToast();
@@ -102,6 +106,10 @@ const Admin = () => {
       if (response.ok && data.success) {
         setIsAuthenticated(true);
         try { sessionStorage.setItem('adminAuthenticated', 'true'); } catch (e) {}
+        if (data.token) {
+          setAdminToken(data.token);
+          try { sessionStorage.setItem('adminToken', data.token); } catch (e) {}
+        }
         toast({
           title: "Authentication successful",
           description: "Welcome to the admin dashboard!",
@@ -125,17 +133,114 @@ const Admin = () => {
   };
 
   const handleValidateRecord = (recordId: number, isValid: boolean) => {
-    toast({
-      title: isValid ? "Record validated" : "Record rejected",
-      description: `Record #${recordId} has been ${isValid ? 'approved' : 'rejected'}.`,
-    });
+    // If using live data, call backend to update record
+    if (useLiveData && adminToken) {
+      fetch(`http://localhost:3000/api/admin/validate/${recordId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ action: isValid ? 'approve' : 'reject', notes: '' }),
+      }).then(async (res) => {
+        const data = await res.json();
+        if (res.ok) {
+          toast({ title: isValid ? 'Record validated' : 'Record rejected', description: data.message });
+          // refresh pending list
+          fetchPending();
+        } else {
+          toast({ title: 'Error', description: data.message || 'Validation failed', variant: 'destructive' });
+        }
+      }).catch(() => {
+        toast({ title: 'Error', description: 'Unable to reach server', variant: 'destructive' });
+      });
+    } else {
+      toast({
+        title: isValid ? "Record validated" : "Record rejected",
+        description: `Record #${recordId} has been ${isValid ? 'approved' : 'rejected'}.`,
+      });
+    }
   };
 
   const handleExportCSV = () => {
-    toast({
-      title: "Export initiated",
-      description: "CSV file will be downloaded shortly.",
-    });
+    if (useLiveData && adminToken) {
+      // initiate download
+      const url = `http://localhost:3000/api/admin/export`;
+      fetch(url, { headers: { Authorization: `Bearer ${adminToken}` } }).then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          toast({ title: 'Export failed', description: err.message || 'Server error', variant: 'destructive' });
+          return;
+        }
+        const blob = await res.blob();
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = 'cleancity_export.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(href);
+        toast({ title: 'Export started', description: 'CSV download should start shortly.' });
+      }).catch(() => {
+        toast({ title: 'Error', description: 'Unable to connect to server', variant: 'destructive' });
+      });
+    } else {
+      toast({
+        title: "Export initiated",
+        description: "CSV file will be downloaded shortly (static data).",
+      });
+    }
+  };
+
+  const fetchPending = async () => {
+    if (!useLiveData || !adminToken) return;
+    try {
+      const res = await fetch('http://localhost:3000/api/admin/pending', { headers: { Authorization: `Bearer ${adminToken}` } });
+      if (!res.ok) return;
+      const data = await res.json();
+      setPendingList(data);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  // When authentication state or stored token changes, ensure adminToken is set from sessionStorage
+  useEffect(() => {
+    if (isAuthenticated && !adminToken) {
+      try {
+        const stored = sessionStorage.getItem('adminToken') || '';
+        if (stored) setAdminToken(stored);
+      } catch (e) {}
+    }
+  }, [isAuthenticated]);
+
+  // Auto-fetch pending records when live data is enabled 
+  useEffect(() => {
+    if (isAuthenticated && useLiveData && adminToken) {
+      fetchPending();
+    }
+  }, [isAuthenticated, useLiveData, adminToken]);
+
+  const handleGenerateReport = async () => {
+    if (!useLiveData || !adminToken) {
+      toast({ title: 'Report', description: 'Static report generation not implemented in demo.' });
+      return;
+    }
+    try {
+      toast({ title: 'Generating report', description: 'This may take a few seconds.' });
+      const res = await fetch('http://localhost:3000/api/admin/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: 'Report failed', description: data.message || 'Server error', variant: 'destructive' });
+        return;
+      }
+      toast({ title: 'Report generated', description: 'Check console for report output.' });
+      console.info('AI Report:', data.report || data);
+    } catch (e) {
+      toast({ title: 'Error', description: 'Unable to generate report', variant: 'destructive' });
+    }
   };
 
   if (!isAuthenticated) {
@@ -196,6 +301,13 @@ const Admin = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="text-center mb-8 animate-fade-in">
+        <div className="absolute right-4 top-24">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-muted-foreground">Static</label>
+            <input type="checkbox" checked={useLiveData} onChange={(e) => { setUseLiveData(e.target.checked); if (e.target.checked) fetchPending(); }} />
+            <label className="text-sm text-muted-foreground">Live</label>
+          </div>
+        </div>
         <div className="flex justify-center mb-4">
           <div className="p-3 bg-gradient-clean rounded-full shadow-eco">
             <Shield className="h-8 w-8 text-white" />
@@ -286,11 +398,11 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {pendingRecords.map((record) => (
-                  <div key={record.id} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
+                {(useLiveData ? pendingList : pendingRecords).map((record: any, idx: number) => (
+                  <div key={record._id || record.id || idx} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
                     <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
                       <img
-                        src={`https://via.placeholder.com/80/22C55E/FFFFFF?text=${record.category[0]}`}
+                        src={record.image_url || `https://via.placeholder.com/80/22C55E/FFFFFF?text=${(record.category||record.label||'')?.[0]||'W'}`}
                         alt="Waste record"
                         className="w-full h-full object-cover rounded-lg"
                       />
@@ -298,15 +410,15 @@ const Admin = () => {
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <Badge variant="secondary">{record.category}</Badge>
-                        <Badge variant={record.confidence > 0.8 ? "default" : "outline"}>
-                          {(record.confidence * 100).toFixed(0)}% confidence
+                        <Badge variant="secondary">{record.category || record.label}</Badge>
+                        <Badge variant={(record.confidence || 0) > 0.8 ? "default" : "outline"}>
+                          {Math.round((record.confidence || 0) * 100)}% confidence
                         </Badge>
                       </div>
-                      <p className="text-sm font-medium text-foreground">{record.contributor}</p>
+                      <p className="text-sm font-medium text-foreground">{record.contributor || (record.userId || '').toString()}</p>
                       <p className="text-sm text-muted-foreground">
                         <MapPin className="inline h-3 w-3 mr-1" />
-                        {record.location} • {record.timestamp}
+                        {(record.location || `${record.lat || ''}, ${record.lng || ''}`)}  {record.timestamp ? new Date(record.timestamp).toLocaleString() : ''}
                       </p>
                     </div>
                     
@@ -314,14 +426,14 @@ const Admin = () => {
                       <Button
                         size="sm"
                         variant="default"
-                        onClick={() => handleValidateRecord(record.id, true)}
+                        onClick={() => handleValidateRecord(record._id || record.id || idx, true)}
                       >
                         <CheckCircle className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleValidateRecord(record.id, false)}
+                        onClick={() => handleValidateRecord(record._id || record.id || idx, false)}
                       >
                         <XCircle className="h-4 w-4" />
                       </Button>
@@ -346,7 +458,7 @@ const Admin = () => {
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
-              <Button variant="clean" className="w-full">
+              <Button variant="clean" className="w-full" onClick={handleGenerateReport}>
                 <Calendar className="mr-2 h-4 w-4" />
                 Generate Report
               </Button>

@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,9 @@ import {
 
 const MapView = () => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
+  const [hotspots, setHotspots] = useState<any[]>([]);
+  const [useLiveData, setUseLiveData] = useState(false);
 
   // Simulated pollution data
   const pollutionStats = [
@@ -34,13 +39,67 @@ const MapView = () => {
   ];
 
   useEffect(() => {
-    // Initialize Leaflet map when component mounts
-    // This is a placeholder - actual Leaflet integration will be added later
-    if (mapRef.current) {
-      // Leaflet map initialization will go here
-      console.log('Map container ready for Leaflet integration');
+    if (!mapRef.current) return;
+
+    // Initialize map once
+    if (!mapInstance) {
+      const map = L.map(mapRef.current).setView([21.1458, 79.0882], 5); // default: India
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      setMapInstance(map);
     }
-  }, []);
+  }, [mapRef, mapInstance]);
+
+  // Fetch hotspots
+  const fetchHotspots = async () => {
+    try {
+      const url = useLiveData ? 'http://localhost:3000/api/hotspots' : '/api/mock/hotspots';
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      setHotspots(data || []);
+    } catch (e) {
+      console.error('Failed to fetch hotspots', e);
+    }
+  };
+
+  useEffect(() => {
+    if (!mapInstance) return;
+  }, [mapInstance]);
+
+  // marker layer management
+  const markerLayerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    // clear previous marker layer
+    if (markerLayerRef.current) {
+      try { mapInstance.removeLayer(markerLayerRef.current); } catch (e) {}
+      markerLayerRef.current = null;
+    }
+
+    const layer = L.layerGroup();
+    hotspots.forEach(h => {
+      try {
+        const marker = L.circleMarker([h.lat, h.lng], { radius: Math.min(20, Math.max(6, (h.count || 1) / 5)), color: 'red' });
+        marker.bindPopup(`<div><strong>Reports: ${h.count}</strong><br/>${(h.lat || 0).toFixed(4)}, ${(h.lng || 0).toFixed(4)}</div>`);
+        marker.addTo(layer);
+      } catch (e) {
+      }
+    });
+
+    layer.addTo(mapInstance);
+    markerLayerRef.current = layer;
+  }, [mapInstance, hotspots]);
+
+  // fetch hotspots initially and when live/static toggles
+  useEffect(() => {
+    fetchHotspots();
+  }, [useLiveData, mapInstance]);
 
   return (
     <div className="container mx-auto px-4 py-8">
