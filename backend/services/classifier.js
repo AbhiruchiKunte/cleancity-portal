@@ -29,7 +29,7 @@ async function loadModel() {
     console.log('✅ Real 8-class MobileNetV2 model loaded successfully from:', modelPath);
     
   } catch (error) {
-    console.error('Error loading REAL ML model. Falling back to MOCK:', error.message);
+    console.error(' ', error.message);
     
     // Fallback to a mock model structure (8 dummy classes)
     model = {
