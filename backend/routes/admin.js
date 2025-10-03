@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateAdmin } from '../utils/auth.js';
-import { validateRecord, exportRecords, loginAdmin, getPendingRecords, generateReport, debugStats } from '../controllers/adminController.js';
+// Corrected the import to match the exports from the controller
+import { loginAdmin, validateRecord, listPendingRecords, generateReport } from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -9,14 +10,28 @@ const router = express.Router();
  */
 router.post('/login', loginAdmin);
 
-// debug stats route to inspect pending/validated counts
+/*
+// The 'debugStats' function does not exist in the controller yet.
+// This route is commented out to prevent a crash.
+// You can uncomment it after you create the function.
 router.get('/debug-stats', debugStats);
+*/
 
-// Protected routes
+
+// Protected routes - any route below this line will require admin authentication
 router.use(authenticateAdmin);
+
 router.post('/validate/:id', validateRecord);
+
+/*
+// The 'exportRecords' function does not exist in the controller yet.
+// This route is commented out to prevent a crash.
 router.get('/export', exportRecords);
-router.get('/pending', getPendingRecords);
+*/
+
+// Corrected this to use 'listPendingRecords' which is the actual function name
+router.get('/pending', listPendingRecords);
+
 router.post('/report', generateReport);
 
 export default router;
