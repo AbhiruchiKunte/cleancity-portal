@@ -11,12 +11,7 @@
    "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
     "node-fetch": "^3.3.2",
-<<<<<<< HEAD
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.2",
-=======
     "bcryptjs": "^2.4.3",
->>>>>>> 018241fbd8d6bd1a36575b5bc033b27a5ddda569
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
