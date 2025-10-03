@@ -36,16 +36,10 @@ const validateRecord = async (req, res) => {
 
     const update = {
       validationStatus: action === 'approve' ? 'approved' : 'rejected',
-<<<<<<< HEAD
-validatedAt: new Date(),
-validatedBy: req.admin || 'admin',
-validated: action === 'approve'
-=======
       validationNotes: notes || '',
       validatedAt: new Date(),
       validatedBy: req.admin || 'admin',
       validated: action === 'approve'
->>>>>>> 4f852f646e721405811d6b2eafc8d79d7b26a2a1
     };
 
     const record = await Record.findByIdAndUpdate(id, update, { new: true, runValidators: true });
