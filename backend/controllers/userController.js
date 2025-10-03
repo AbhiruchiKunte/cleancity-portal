@@ -1,7 +1,7 @@
 // controllers/userController.js
 
 import User from '../models/User.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // <-- This is the only line that has changed
 import jwt from 'jsonwebtoken';
 
 // ----------------- REGISTER -----------------
@@ -80,7 +80,7 @@ const login = async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-  userId: user._id.toString(),
+        userId: user._id.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
         username: user.username,
