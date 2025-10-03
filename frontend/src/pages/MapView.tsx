@@ -1,27 +1,62 @@
-import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+// MapView.tsx
+import React, { useEffect, useState, useRef } from "react";
+import 'ol/ol.css';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import { Tile as TileLayer, Heatmap as OLHeatmapLayer } from 'ol/layer';
+import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
+import { fromLonLat } from 'ol/proj';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Map as MapIcon, 
-  MapPin, 
-  Filter, 
-  Layers, 
+import {
+  Map as MapIcon,
+  MapPin,
+  Filter,
+  Layers,
   TrendingUp,
   Calendar,
   Users,
   Target
 } from 'lucide-react';
+import axios from "axios";
+import { GoogleMap, HeatmapLayer } from "@react-google-maps/api";
 
-const MapView = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<any>(null);
+const mapContainerStyle = {
+  width: "100vw",
+  height: "100vh",
+};
+
+const center = { lat: 28.6139, lng: 77.2090 }; // Example: Delhi
+
+// Reddish gradient for heatmap
+const heatmapGradient = [
+  "rgba(255, 0, 0, 0)",      // transparent
+  "rgba(255, 0, 0, 1)",      // red
+  "rgba(255, 100, 0, 1)",    // orange-red
+  "rgba(255, 200, 0, 1)",    // yellowish
+];
+
+interface Record {
+  lat: number;
+  lng: number;
+  // ...other fields if needed
+}
+
+const MapView: React.FC = () => {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<Map | null>(null);
+  const heatSourceRef = useRef<VectorSource | null>(null);
+  const heatLayerRef = useRef<OLHeatmapLayer | null>(null);
+
   const [hotspots, setHotspots] = useState<any[]>([]);
   const [useLiveData, setUseLiveData] = useState(false);
+  const [heatmapData, setHeatmapData] = useState<google.maps.LatLng[]>([]);
 
-  // Simulated pollution data
+  // simulated stats (kept as is)
   const pollutionStats = [
     { label: "Total Reports", value: "1,247", icon: MapPin, color: "text-blue-600" },
     { label: "This Week", value: "89", icon: Calendar, color: "text-green-600" },
@@ -38,68 +73,121 @@ const MapView = () => {
     { type: "Other", count: 78, color: "bg-red-500" },
   ];
 
+  // initialize map (OpenStreetMap tiles via OpenLayers)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (mapRef.current) return; // already initialized
+    const raster = new TileLayer({
+      source: new OSM()
+    });
 
-    // Initialize map once
-    if (!mapInstance) {
-      const map = L.map(mapRef.current).setView([21.1458, 79.0882], 5); // default: India
+    const initialHeatSource = new VectorSource();
+    heatSourceRef.current = initialHeatSource;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+    const heat = new OLHeatmapLayer({
+      source: initialHeatSource,
+      blur: 30,
+      radius: 15,
+      weight: (feat: Feature) => {
+        // weight based on "count" property, normalized later by OL
+        const c = feat.get('count') || 1;
+        // keep values between 0 and 1:
+        return Math.min(1, Math.log10(c + 1) / 2); // gentle growth
+      }
+    });
 
-      setMapInstance(map);
-    }
-  }, [mapRef, mapInstance]);
+    heatLayerRef.current = heat;
 
-  // Fetch hotspots
+    const map = new Map({
+      target: mapContainerRef.current || undefined,
+      layers: [raster, heat],
+      view: new View({
+        center: fromLonLat([79.0882, 21.1458]), // centered on India approx
+        zoom: 5
+      })
+    });
+
+    mapRef.current = map;
+
+    // clean up on unmount
+    return () => {
+      map.setTarget(undefined);
+      mapRef.current = null;
+    };
+  }, []);
+
+  // function to populate heatmap source from hotspots array
+  const populateHeatmap = (hotspotsArr: any[]) => {
+    if (!heatSourceRef.current) return;
+    const src = heatSourceRef.current;
+    src.clear();
+
+    hotspotsArr.forEach(h => {
+      try {
+        const lon = h.lng;
+        const lat = h.lat;
+        const count = h.count || 1;
+        // openlayers uses [lon, lat] in fromLonLat
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([lon, lat])),
+          count
+        });
+        // set weight property if needed
+        feature.set('count', count);
+        src.addFeature(feature);
+      } catch (e) {
+        // skip malformed points
+      }
+    });
+  };
+
+  // fetch hotspots (pending by default)
   const fetchHotspots = async () => {
     try {
-      const url = useLiveData ? 'http://localhost:3000/api/hotspots' : '/api/mock/hotspots';
+      // If useLiveData => hit server endpoint, else use mock path (you had /api/mock/hotspots)
+      const url = useLiveData
+        ? `/api/hotspots?validated=false&precision=3`
+        : '/api/mock/hotspots';
+
       const res = await fetch(url);
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.warn('hotspot fetch returned not ok', res.status);
+        return;
+      }
       const data = await res.json();
+      // expected format: [{ lat, lng, count }, ...]
       setHotspots(data || []);
+      populateHeatmap(data || []);
     } catch (e) {
       console.error('Failed to fetch hotspots', e);
     }
   };
 
+  // initial and on live toggle
   useEffect(() => {
-    if (!mapInstance) return;
-  }, [mapInstance]);
-
-  // marker layer management
-  const markerLayerRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (!mapInstance) return;
-
-    // clear previous marker layer
-    if (markerLayerRef.current) {
-      try { mapInstance.removeLayer(markerLayerRef.current); } catch (e) {}
-      markerLayerRef.current = null;
-    }
-
-    const layer = L.layerGroup();
-    hotspots.forEach(h => {
-      try {
-        const marker = L.circleMarker([h.lat, h.lng], { radius: Math.min(20, Math.max(6, (h.count || 1) / 5)), color: 'red' });
-        marker.bindPopup(`<div><strong>Reports: ${h.count}</strong><br/>${(h.lat || 0).toFixed(4)}, ${(h.lng || 0).toFixed(4)}</div>`);
-        marker.addTo(layer);
-      } catch (e) {
-      }
-    });
-
-    layer.addTo(mapInstance);
-    markerLayerRef.current = layer;
-  }, [mapInstance, hotspots]);
-
-  // fetch hotspots initially and when live/static toggles
-  useEffect(() => {
+    // only fetch once map is initialized
+    if (!mapRef.current) return;
     fetchHotspots();
-  }, [useLiveData, mapInstance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useLiveData, mapRef.current]);
+
+  // Fetch all records on mount
+  useEffect(() => {
+    axios.get<Record[]>("/api/records").then(res => {
+      setHeatmapData(
+        res.data.map(rec => new window.google.maps.LatLng(rec.lat, rec.lng))
+      );
+    });
+  }, []);
+
+  // Call this after successful upload
+  const handleUploadSuccess = (newRecord: Record) => {
+    setHeatmapData(prev => [
+      ...prev,
+      new window.google.maps.LatLng(newRecord.lat, newRecord.lng)
+    ]);
+  };
+
+  // You may want to pass handleUploadSuccess to your upload component as a prop
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -129,10 +217,12 @@ const MapView = () => {
                   <CardTitle className="text-lg">Interactive Map</CardTitle>
                   <CardDescription>Click markers to view detailed waste information</CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
+                <div className="flex gap-2 items-center">
+                  <Button variant="outline" size="sm" onClick={() => fetchHotspots()}>
+                    Refresh
+                  </Button>
+                  <Button variant={useLiveData ? "eco" : "outline"} size="sm" onClick={() => setUseLiveData(!useLiveData)}>
+                    {useLiveData ? 'Live: ON' : 'Live: OFF'}
                   </Button>
                   <Button variant="outline" size="sm">
                     <Layers className="h-4 w-4 mr-2" />
@@ -142,37 +232,15 @@ const MapView = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {/* Map Container - Leaflet will be integrated here */}
-              <div 
-                ref={mapRef}
+              {/* Map Container - OpenLayers will render here */}
+              <div
+                ref={mapContainerRef}
                 className="w-full h-96 lg:h-[500px] bg-gradient-to-br from-green-100 to-blue-100 rounded-lg relative overflow-hidden"
-              >
-                {/* Placeholder map content */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-4 p-8">
-                    <MapIcon className="h-16 w-16 text-primary mx-auto opacity-50" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-2">
-                        Interactive Map Loading...
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Leaflet map integration will display pollution markers,<br />
-                        heatmap overlays, and marker clustering here.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Simulated map markers */}
-                <div className="absolute top-20 left-20 w-4 h-4 bg-red-500 rounded-full animate-eco-pulse"></div>
-                <div className="absolute top-32 right-24 w-4 h-4 bg-blue-500 rounded-full animate-eco-pulse"></div>
-                <div className="absolute bottom-24 left-32 w-4 h-4 bg-yellow-500 rounded-full animate-eco-pulse"></div>
-                <div className="absolute bottom-32 right-20 w-4 h-4 bg-green-500 rounded-full animate-eco-pulse"></div>
-              </div>
+              />
             </CardContent>
           </Card>
 
-          {/* Recent Reports */}
+          {/* Recent Reports (kept static) */}
           <Card className="animate-slide-up">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -245,7 +313,7 @@ const MapView = () => {
                     <span className="text-sm text-muted-foreground">{waste.count}</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div 
+                    <div
                       className={`${waste.color} h-2 rounded-full transition-all duration-300`}
                       style={{ width: `${(waste.count / 456) * 100}%` }}
                     ></div>

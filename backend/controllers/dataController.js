@@ -185,33 +185,44 @@ const getMyMonthlyProgress = async (req, res) => {
  */
 const getHotspots = async (req, res) => {
   try {
+    // read query params: validated=true|false (default: false -> pending)
+    const validatedParam = req.query.validated;
+    // default to false (i.e., show pending records heatmap)
+    const validated = validatedParam === undefined ? false : (validatedParam === 'true');
+
+    // allow precision (round digits) e.g. 3 ~ ~100m. default 3
+    const precision = parseInt(req.query.precision) || 3;
+    // safety clamp
+    const roundArg = Math.max(0, Math.min(6, precision));
+
+    const matchStage = { validated: validated };
+
     const hotspots = await Record.aggregate([
-        { $match: { validated: true } },
-        {
-            $project: {
-                lat_binned: { $round: ["$lat", 3] }, // Group by rounded lat/lng
-                lng_binned: { $round: ["$lng", 3] }
-            }
-        },
-        {
-            $group: {
-                _id: { lat: "$lat_binned", lng: "$lng_binned" },
-                count: { $sum: 1 }
-            }
-        },
-        { $sort: { count: -1 } },
-        { $limit: 50 }
+      { $match: matchStage },
+      {
+        $project: {
+          lat_binned: { $round: ["$lat", roundArg] }, // Group by rounded lat/lng
+          lng_binned: { $round: ["$lng", roundArg] }
+        }
+      },
+      {
+        $group: {
+          _id: { lat: "$lat_binned", lng: "$lng_binned" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 500 } // allow more hotspots if needed
     ]);
-    
+
     // Format the output
     const formattedHotspots = hotspots.map(item => ({
-        lat: item._id.lat,
-        lng: item._id.lng,
-        count: item.count
+      lat: item._id.lat,
+      lng: item._id.lng,
+      count: item.count
     }));
 
     res.json(formattedHotspots);
-
   } catch (error) {
     console.error('Error fetching hotspots:', error);
     res.status(500).json({ message: 'Error generating hotspots' });
