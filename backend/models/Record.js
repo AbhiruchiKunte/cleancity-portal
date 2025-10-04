@@ -12,6 +12,8 @@ const RecordSchema = new mongoose.Schema({
   lat: { type: Number, required: true },
   lng: { type: Number, required: true },
   image_url: { type: String, required: true },
+   embedding: { type: [Number], default: [] },
+  linkedRecordId: { type: mongoose.Schema.Types.ObjectId, ref: "Record" },
   timestamp: { type: Date, default: Date.now },
   validated: { type: Boolean, default: false },
   validationStatus: {
