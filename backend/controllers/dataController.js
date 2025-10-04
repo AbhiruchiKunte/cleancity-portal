@@ -181,13 +181,13 @@ const getMyMonthlyProgress = async (req, res) => {
 
 /**
  * GET /api/hotspots: Aggregates frequent lat/lng clusters. (Module B5)
- * Uses aggregation to group records by location (approximated for simplicity).
  */
 const getHotspots = async (req, res) => {
   try {
-    // read query params: validated=true|false (default: false -> pending)
+    // read query params: validated=true|false (default: false -> pending/rejected)
+    // We map validated=true -> validationStatus === 'approved'
+    // validated=false -> validationStatus in ['pending','rejected'] (i.e. not approved)
     const validatedParam = req.query.validated;
-    // default to false (i.e., show pending records heatmap)
     const validated = validatedParam === undefined ? false : (validatedParam === 'true');
 
     // allow precision (round digits) e.g. 3 ~ ~100m. default 3
@@ -195,7 +195,9 @@ const getHotspots = async (req, res) => {
     // safety clamp
     const roundArg = Math.max(0, Math.min(6, precision));
 
-    const matchStage = { validated: validated };
+    const matchStage = validated
+      ? { validationStatus: 'approved' }
+      : { validationStatus: { $in: ['pending', 'rejected'] } };
 
     const hotspots = await Record.aggregate([
       { $match: matchStage },

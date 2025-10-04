@@ -96,7 +96,11 @@ const generateReport = async (req, res) => {
     // --- Start of Gemini API Integration ---
 
     // 1. Set the Gemini API key from .env file and set the endpoint
-    const geminiApiKey = process.env.GEMINI_API_KEY; // <-- THIS IS THE FIX
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      console.warn('GEMINI_API_KEY not set; skipping AI report generation');
+      return res.json({ report: null, records: shortRecords, note: 'Gemini API key not configured' });
+    }
     const geminiApiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
 
     // 2. Combine system and user prompts for Gemini
@@ -123,8 +127,6 @@ const generateReport = async (req, res) => {
 
     const json = await resp.json();
     const aiText = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // --- End of Gemini API Integration ---
 
     res.json({ report: aiText, records: shortRecords });
   } catch (error) {
