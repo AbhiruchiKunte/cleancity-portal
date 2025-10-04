@@ -54,7 +54,7 @@ const Home = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left animate-fade-in">
               <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                Building <span className="text-accent">Cleaner Cities</span>
+                Building Cleaner Cities
                 <br />
                 Together
               </h1>
@@ -63,7 +63,7 @@ const Home = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/upload">
-                  <Button size="lg" variant="hero" className="w-full sm:w-auto">
+                  <Button size="lg" variant="clean" className="w-full sm:w-auto">
                     <Upload className="mr-2 h-5 w-5" />
                     Start Contributing
                   </Button>
