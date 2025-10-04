@@ -271,7 +271,6 @@ const Admin = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                   className="pr-10"
                 />
-                { }
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -300,8 +299,8 @@ const Admin = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="text-center mb-8 animate-fade-in">
-        <div className="absolute right-4 top-24">
+      <div className="text-center mb-8 animate-fade-in relative">
+        <div className="absolute right-0 top-0 md:right-4 md:top-0">
           <div className="flex items-center space-x-2">
             <label className="text-sm text-muted-foreground">Static</label>
             <input type="checkbox" checked={useLiveData} onChange={(e) => { setUseLiveData(e.target.checked); if (e.target.checked) fetchPending(); }} />
@@ -398,48 +397,61 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {(useLiveData ? pendingList : pendingRecords).map((record: any, idx: number) => (
-                  <div key={record._id || record.id || idx} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
-                    <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                      <img
-                        src={record.image_url || `https://via.placeholder.com/80/22C55E/FFFFFF?text=${(record.category||record.label||'')?.[0]||'W'}`}
-                        alt="Waste record"
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Badge variant="secondary">{record.category || record.label}</Badge>
-                        <Badge variant={(record.confidence || 0) > 0.8 ? "default" : "outline"}>
-                          {Math.round((record.confidence || 0) * 100)}% confidence
-                        </Badge>
-                      </div>
-                      <p className="text-sm font-medium text-foreground">{record.contributor || (record.userId || '').toString()}</p>
-                      <p className="text-sm text-muted-foreground">
-                        <MapPin className="inline h-3 w-3 mr-1" />
-                        {(record.location || `${record.lat || ''}, ${record.lng || ''}`)}  {record.timestamp ? new Date(record.timestamp).toLocaleString() : ''}
-                      </p>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="default"
-                        onClick={() => handleValidateRecord(record._id || record.id || idx, true)}
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleValidateRecord(record._id || record.id || idx, false)}
-                      >
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
+                {(useLiveData ? pendingList : pendingRecords).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No pending records to validate
                   </div>
-                ))}
+                ) : (
+                  (useLiveData ? pendingList : pendingRecords).map((record: any, idx: number) => (
+                    <div key={record._id || record.id || idx} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
+                      <div className="w-20 h-20 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                        <img
+                          src={record.image_url || `https://via.placeholder.com/80/22C55E/FFFFFF?text=${(record.category||record.label||'')?.[0]||'W'}`}
+                          alt="Waste record"
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                          <Badge variant="secondary">{record.category || record.label}</Badge>
+                          <Badge variant={(record.confidence || 0) > 0.8 ? "default" : "outline"}>
+                            {Math.round((record.confidence || 0) * 100)}% confidence
+                          </Badge>
+                        </div>
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {record.contributor || (record.userId || '').toString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground break-words">
+                          <MapPin className="inline h-3 w-3 mr-1" />
+                          {(record.location || `${record.lat || ''}, ${record.lng || ''}`)}
+                        </p>
+                        {record.timestamp && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(record.timestamp).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div className="flex space-x-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => handleValidateRecord(record._id || record.id || idx, true)}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleValidateRecord(record._id || record.id || idx, false)}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
