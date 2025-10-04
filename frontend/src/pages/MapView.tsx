@@ -46,8 +46,8 @@ const MapView: React.FC = () => {
 
     const heat = new OLHeatmapLayer({
       source: initialHeatSource,
-      blur: 15,
-      radius: 20,
+      blur: 3,
+      radius: 5,
       weight: (feat: Feature) => {
         const c = feat.get('count') || 1;
         return 1; // Always max weight for visibility
@@ -59,7 +59,7 @@ const MapView: React.FC = () => {
         'rgba(220,20,20,0.9)',
         'rgba(255,0,0,1)'
       ] as any,
-      opacity: 0.8,
+      opacity: 1,
     });
 
     heatLayerRef.current = heat;

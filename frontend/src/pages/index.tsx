@@ -51,13 +51,13 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section - Updated button to Login/Register */}
-      <section className="relative overflow-hidden bg-gradient-hero py-20 lg:py-32">
+      <section className="relative overflow-hidden bg-gradient-hero py-20 lg:py-32 animate-fade-in">
         <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
         <div className="container relative mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left animate-fade-in">
               <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                Building <span className="text-accent">Cleaner Cities</span>
+                Building Cleaner Cities
                 <br />
                 Together
               </h1>
@@ -66,7 +66,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link to="/login">
-                  <Button size="lg" variant="hero" className="w-full sm:w-auto">
+                  <Button size="lg" variant="clean" className="w-full sm:w-auto">
                     <LogIn className="mr-2 h-5 w-5" />
                     Log In to Start
                   </Button>
@@ -101,7 +101,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-background animate-fade-in">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-fade-in">
             <div className="flex justify-center mb-4">
