@@ -45,11 +45,24 @@ const Admin = () => {
   const [showPassword, setShowPassword] = useState(false);
 
 
+  // Helper function to generate waste image based on category
+  const getWasteImage = (category: string, seed?: string | number) => {
+    const categoryLower = (category || '').toLowerCase();
+    const seedValue = seed || Math.random().toString();
+    
+    // Using picsum.photos for varied waste-related images
+    const imageId = Math.abs(seedValue.toString().split('').reduce((a, b) => {
+      return ((a << 5) - a) + b.charCodeAt(0);
+    }, 0)) % 100 + 400; // Range 400-500 for variety
+    
+    return `https://picsum.photos/seed/${categoryLower}-${imageId}/150/150`;
+  };
+
   // Simulated admin data
   const pendingRecords = [
     {
       id: 1,
-      image: '/api/placeholder/150/150',
+      image: getWasteImage('Plastic', 1),
       category: 'Plastic',
       location: 'Downtown Park',
       timestamp: '2024-01-15 14:30',
@@ -59,7 +72,7 @@ const Admin = () => {
     },
     {
       id: 2,
-      image: '/api/placeholder/150/150',
+      image: getWasteImage('Metal', 2),
       category: 'Metal',
       location: 'Main Street',
       timestamp: '2024-01-15 13:45',
@@ -69,7 +82,7 @@ const Admin = () => {
     },
     {
       id: 3,
-      image: '/api/placeholder/150/150',
+      image: getWasteImage('Paper', 3),
       category: 'Paper',
       location: 'City Center',
       timestamp: '2024-01-15 12:15',
@@ -402,55 +415,64 @@ const Admin = () => {
                     No pending records to validate
                   </div>
                 ) : (
-                  (useLiveData ? pendingList : pendingRecords).map((record: any, idx: number) => (
-                    <div key={record._id || record.id || idx} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
-                      <div className="w-20 h-20 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
-                        <img
-                          src={record.image_url || `https://via.placeholder.com/80/22C55E/FFFFFF?text=${(record.category||record.label||'')?.[0]||'W'}`}
-                          alt="Waste record"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0 text-center sm:text-left">
-                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
-                          <Badge variant="secondary">{record.category || record.label}</Badge>
-                          <Badge variant={(record.confidence || 0) > 0.8 ? "default" : "outline"}>
-                            {Math.round((record.confidence || 0) * 100)}% confidence
-                          </Badge>
+                  (useLiveData ? pendingList : pendingRecords).map((record: any, idx: number) => {
+                    const imageUrl = record.image_url || record.image || getWasteImage(record.category || record.label, record._id || record.id || idx);
+                    
+                    return (
+                      <div key={record._id || record.id || idx} className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-gradient-eco rounded-lg">
+                        <div className="w-20 h-20 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                          <img
+                            src={imageUrl}
+                            alt={`${record.category || record.label} waste`}
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              // Fallback if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(record.category || record.label || 'Waste')}&background=22C55E&color=fff&size=80`;
+                            }}
+                          />
                         </div>
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {record.contributor || (record.userId || '').toString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground break-words">
-                          <MapPin className="inline h-3 w-3 mr-1" />
-                          {(record.location || `${record.lat || ''}, ${record.lng || ''}`)}
-                        </p>
-                        {record.timestamp && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(record.timestamp).toLocaleString()}
+                        
+                        <div className="flex-1 min-w-0 text-center sm:text-left">
+                          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                            <Badge variant="secondary">{record.category || record.label}</Badge>
+                            <Badge variant={(record.confidence || 0) > 0.8 ? "default" : "outline"}>
+                              {Math.round((record.confidence || 0) * 100)}% confidence
+                            </Badge>
+                          </div>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {record.contributor || (record.userId || '').toString()}
                           </p>
-                        )}
+                          <p className="text-sm text-muted-foreground break-words">
+                            <MapPin className="inline h-3 w-3 mr-1" />
+                            {(record.location || `${record.lat || ''}, ${record.lng || ''}`)}
+                          </p>
+                          {record.timestamp && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(record.timestamp).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div className="flex space-x-2 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleValidateRecord(record._id || record.id || idx, true)}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleValidateRecord(record._id || record.id || idx, false)}
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      
-                      <div className="flex space-x-2 flex-shrink-0">
-                        <Button
-                          size="sm"
-                          variant="default"
-                          onClick={() => handleValidateRecord(record._id || record.id || idx, true)}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleValidateRecord(record._id || record.id || idx, false)}
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </CardContent>
